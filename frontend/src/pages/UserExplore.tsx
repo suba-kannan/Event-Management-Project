@@ -4,7 +4,7 @@ import './UserExplore.css';
 import Navbar from '../components/Navbar';
 
 type Event = {
-  remainingTime: any;
+  remainingTime: string | null;
   id: number;
   name: string;
   description: string;
@@ -107,13 +107,13 @@ const UserExplore: React.FC = () => {
   const openRegistrationForm = (event: Event) => {
     if (!user?.id) {
       setAlert('You must be logged in to book an event.');
-      setTimeout(() => setAlert(null), 3000);
+      setTimeout(() => setAlert(null), 6000);
       return;
     }
 
     if (event.seatsAvailable <= 0) {
       setAlert('No seats available for this event.');
-      setTimeout(() => setAlert(null), 3000);
+      setTimeout(() => setAlert(null), 6000);
       return;
     }
 
@@ -128,7 +128,7 @@ const UserExplore: React.FC = () => {
 
     if (participants > selectedEvent.seatsAvailable) {
       setAlert('Not enough seats available.');
-      setTimeout(() => setAlert(null), 3000);
+      setTimeout(() => setAlert(null), 6000);
       return;
     }
 
@@ -136,7 +136,6 @@ const UserExplore: React.FC = () => {
       const userString = localStorage.getItem('user');
       const user = userString ? JSON.parse(userString) : null;
       const token = user.token;
-      console.log("TOKEN", token);
       await axios.post('http://localhost:5000/api/bookings/book', {
         userId: user.id,
         eventId: selectedEvent.id,
@@ -147,13 +146,14 @@ const UserExplore: React.FC = () => {
         },
       });
 
-      setAllEvents((prev) =>
+      setFilteredEvents((prev) =>
         prev.map((e) =>
           e.id === selectedEvent.id
             ? { ...e, seatsAvailable: e.seatsAvailable - participants }
             : e
         )
       );
+      
 
       setTicket({ event: selectedEvent, participants, user });
       setShowForm(false);
@@ -163,7 +163,7 @@ const UserExplore: React.FC = () => {
       console.error('Booking error:', error);
     }
 
-    setTimeout(() => setAlert(null), 3000);
+    setTimeout(() => setAlert(null), 6000);
   };
 
   const getRemainingTime = (event: Event) => {
@@ -315,7 +315,7 @@ const UserExplore: React.FC = () => {
                   setAlert('Cancellation failed. Please try again.');
                 }
 
-                setTimeout(() => setAlert(null), 3000);
+                setTimeout(() => setAlert(null), 6000);
               }}
             >
               Cancel Booking

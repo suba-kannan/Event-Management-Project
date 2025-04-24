@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import './Navbar.css';
 import LoginSignup from './LoginSignup';
+import { toast, ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 
 function Navbar() {
@@ -44,6 +46,15 @@ function Navbar() {
     const openModal = () => setShowModal(true);
     const closeModal = () => setShowModal(false);
 
+    const handleProtectedClick = (e: React.MouseEvent<HTMLAnchorElement, MouseEvent>, _path: string) => {
+      if (!isLoggedIn) {
+        e.preventDefault();
+        toast.error('You need to login');
+      } else {
+        setIsMobileMenuOpen(false);
+      }
+    };
+
   return (
     <>
       <nav className="navbar">
@@ -60,11 +71,15 @@ function Navbar() {
           <ul className={`nav-links ${isMobileMenuOpen ? 'mobile-open' : ''}`}>
             <li><Link to="/" onClick={() => setIsMobileMenuOpen(false)}>Home</Link></li>
             <li><Link to="/feature" onClick={() => setIsMobileMenuOpen(false)}>Features</Link></li>
-            <li><Link to="/explore" onClick={() => setIsMobileMenuOpen(false)}>Explore</Link></li>
-            <li><Link to="/dashboard" onClick={() => setIsMobileMenuOpen(false)}>Dashboard</Link></li>
-            <li><Link to="/profile" onClick={() => setIsMobileMenuOpen(false)}>Profile</Link></li>
-
-
+              <li>
+              <Link to="/explore" onClick={(e) => handleProtectedClick(e, '/explore')}>Explore</Link>
+            </li>
+            <li>
+              <Link to="/dashboard" onClick={(e) => handleProtectedClick(e, '/dashboard')}>Dashboard</Link>
+            </li>
+            <li>
+              <Link to="/profile" onClick={(e) => handleProtectedClick(e, '/profile')}>Profile</Link>
+            </li>
             {isMobileView && (
               <li className="sign-in-mobile">
                 <button className="sign-in-btn" onClick={openModal}>Sign Up</button>
@@ -91,6 +106,7 @@ function Navbar() {
         <LoginSignup onClose={closeModal} onSignIn={handleSignIn} />
       )}
       </nav>
+      <ToastContainer position="top-center" autoClose={2000} />
 
     </>
   );
