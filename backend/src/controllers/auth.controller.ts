@@ -9,19 +9,17 @@ const userRepository = AppDataSource.getRepository(User);
 export class AuthController {
   async register(req: Request, res: Response): Promise<void> {
     try {
-      const { name, email, password, role } = req.body;
-  
-      console.log("Registering user:", { name, email, password, role });
-  
+      const { name, phone,  email, password, role } = req.body;
+    
       const existingUser = await userRepository.findOne({ where: { email } });
       if (existingUser) {
-        console.log("Email already exists");
-        res.status(400).json({ message: "Email already exists" });
-        return;
-      }
+       res.status(400).json({ message: "Email already exists" });
+       return
+     }
+
   
       const hashedPassword = await bcrypt.hash(password, 10);
-      const user = userRepository.create({ name, email, password: hashedPassword, role });
+      const user = userRepository.create({ name, phone, email, password: hashedPassword, role });
   
       await userRepository.save(user);
       console.log("User registered successfully!");
@@ -52,7 +50,7 @@ export class AuthController {
       const token = jwt.sign(
         { id: user.id, email: user.email, role: user.role },
         process.env.JWT_SECRET as string,
-        { expiresIn: '1h' }
+        { expiresIn: '1d' }
       );
   
       res.status(200).json({ message: 'Login successful', token, role: user.role, id: user.id,name: user.name,email: user.email });

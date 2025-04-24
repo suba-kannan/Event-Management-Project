@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 interface ProfileRedirectProps {
-  destination: 'profile' | 'dashboard';
+  destination: 'explore' | 'dashboard' | 'profile';
 }
 
 const ProfileRedirect: React.FC<ProfileRedirectProps> = ({ destination }) => {
@@ -16,17 +16,25 @@ const ProfileRedirect: React.FC<ProfileRedirectProps> = ({ destination }) => {
       if (role === 'Admin') {
         navigate('/admin-dashboard', { replace: true });
       } else if (role === 'Organizer') {
-        navigate('/organizer-dashboard', { replace: true });
+        navigate('/OrganizerDashboard', { replace: true });
       } else if (role === 'User') {
-        navigate('/user-dashboard', { replace: true });
+        navigate('/UserDashboard', { replace: true });
+      } else {
+        navigate('/');
+      }
+    } else if (destination === 'explore') {
+      if (role === 'Organizer') {
+        navigate('/OrganizerExplore', { replace: true });
+      } else if (role === 'User') {
+        navigate('/UserExplore', { replace: true });
       } else {
         navigate('/');
       }
     } else if (destination === 'profile') {
       if (role === 'Organizer') {
-        navigate('/OrganizerProfilePage', { replace: true });
+        navigate('/OrganizerProfile', { replace: true });
       } else if (role === 'User') {
-        navigate('/UserProfilePage', { replace: true });
+        navigate('/UserProfile', { replace: true });
       } else {
         navigate('/');
       }

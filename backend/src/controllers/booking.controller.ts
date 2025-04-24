@@ -3,15 +3,14 @@ import { AppDataSource } from '../config/data-source';
 import { Booking } from '../entities/Booking';
 import { Event } from '../entities/Event';
 import { User } from '../entities/User';
+import { sendBookingCancellation, sendBookingConfirmation } from './emailService';
 
 export const createBooking = async (req: Request, res: Response) => {
   const { userId, eventId, participants } = req.body;
-  console.log("User id",userId);
-  console.log("event id",eventId);
   
   const userRepo = AppDataSource.getRepository(User);
-    const eventRepo = AppDataSource.getRepository(Event);
-    const bookingRepo = AppDataSource.getRepository(Booking);
+  const eventRepo = AppDataSource.getRepository(Event);
+  const bookingRepo = AppDataSource.getRepository(Booking);
 
   const user = await userRepo.findOne({where:{id:userId}});
   const event = await eventRepo.findOne({where:{id:eventId}});
@@ -21,14 +20,14 @@ export const createBooking = async (req: Request, res: Response) => {
      return
   }
 
-  if (event.availableSeats < participants) {
+  if (event.seatsAvailable < participants) {
      res.status(400).json({ message: 'Not enough seats available' });
      return
   }
 
   const totalPrice = event.price * participants;
 
-  event.availableSeats -= participants;
+  event.seatsAvailable -= participants;
   await eventRepo.save(event);
 
   const booking = bookingRepo.create({
@@ -40,6 +39,9 @@ export const createBooking = async (req: Request, res: Response) => {
 
   await bookingRepo.save(booking);
 
+  await sendBookingConfirmation(user.email, event.name, participants, event.price * participants);
+  
+
   res.status(201).json({ message: 'Booking successful', booking });
 };
 
@@ -49,10 +51,11 @@ export const cancelBooking = async (req: Request, res: Response) => {
   try {
     const bookingRepo = AppDataSource.getRepository(Booking);
     const eventRepo = AppDataSource.getRepository(Event);
+    const userRepo = AppDataSource.getRepository(User);
 
     const booking = await bookingRepo.findOne({
       where: { user: { id: userId }, event: { id: eventId } },
-      relations: ['event'],
+      relations: ['event', 'user'],
     });
 
     if (!booking) {
@@ -61,12 +64,17 @@ export const cancelBooking = async (req: Request, res: Response) => {
     }
 
     const participants = booking.participants;
+    const event = booking.event;
+    const user = booking.user;
 
     await bookingRepo.remove(booking);
 
-    booking.event.availableSeats += participants;
+    booking.event.seatsAvailable += participants;
     await eventRepo.save(booking.event);
 
+    await sendBookingCancellation(booking.user.email, booking.event.name, participants);
+    console.log('user.email',user.email);
+    
     res.status(200).json({ message: 'Booking cancelled successfully' });
   } catch (error) {
     console.error('Cancel error:', error);
@@ -87,4 +95,3 @@ export const getUserBookings = async (req: Request, res: Response) => {
     res.status(500).json({ message: 'Server error' });
   }
 };
-

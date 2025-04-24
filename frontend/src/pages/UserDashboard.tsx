@@ -1,6 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import './UserDashboard.css';
+import 'react-calendar/dist/Calendar.css';
+import Calendar from 'react-calendar';
+import { FaCalendarAlt } from 'react-icons/fa';
+import Navbar from '../components/Navbar';
 
 type Event = {
   id: number;
@@ -11,226 +15,194 @@ type Event = {
   time: string;
   price: number;
   banner: string;
-  seatsAvailable: number;
-  availableSeats: number;
+};
+
+type Booking = {
+  id: number;
+  participants: number;
+  event: Event;
 };
 
 type User = {
   id: number;
   name: string;
+  email?: string;
 };
 
 const UserDashboard: React.FC = () => {
-  const [allEvents, setAllEvents] = useState<Event[]>([]);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [filteredEvents, setFilteredEvents] = useState<Event[]>([]);
-  const [alert, setAlert] = useState<string | null>(null);
-
-  const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
-  const [participants, setParticipants] = useState(1);
-  const [showForm, setShowForm] = useState(false);
-  const [ticket, setTicket] = useState<{ event: Event; participants: number; user: User } | null>(null);
-
   const storedUser = localStorage.getItem('user');
   const user: User | null = storedUser ? JSON.parse(storedUser) : null;
 
+  const [bookings, setBookings] = useState<Booking[]>([]);
+  const [alert, setAlert] = useState<string | null>(null);
+  const [markedDates, setMarkedDates] = useState<Date[]>([]);
+  const [showCalendar, setShowCalendar] = useState(false);
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [selectedEvents, setSelectedEvents] = useState<Booking[]>([]);
+
+  const fetchUserBookings = async () => {
+    try {
+      const userString = localStorage.getItem('user');
+      const user = userString ? JSON.parse(userString) : null;
+      const token = user.token
+      if (!user?.id) return;
+     
+      const res = await axios.get(`http://localhost:5000/api/bookings/user/${user.id}`,  {
+        headers: {
+          authorization: `Bearer ${token}`,
+        },
+        withCredentials: true, 
+      });
+      setBookings(res.data.bookings || []);
+    } catch (error) {
+      console.error('Error fetching bookings:', error);
+    }
+  };
+
   useEffect(() => {
-    const fetchEvents = async () => {
-      try {
-        const res = await axios.get('http://localhost:5000/api/events/all');
-        const upcomingEvents = res.data.events.filter((event: Event) => {
-          const eventDateTime = new Date(`${event.date}T${event.time}`);
-          return eventDateTime > new Date();
-        });
-  
-        setAllEvents(upcomingEvents);
-        setFilteredEvents(upcomingEvents);
-      } catch (err) {
-        console.error('Error fetching events:', err);
-      }
-    };
-    fetchEvents();
+    fetchUserBookings();
   }, []);
 
-  const handleSearch = () => {
-    const query = searchQuery.toLowerCase();
-    const filtered = allEvents.filter(
-      (event) =>
-        event.name.toLowerCase().includes(query) ||
-        event.location.toLowerCase().includes(query) ||
-        event.date.toLowerCase().includes(query) ||
-        event.time.toLowerCase().includes(query)
-    );
-    setFilteredEvents(filtered);
-  };
+  useEffect(() => {
+    const dates = bookings.map((b) => new Date(b.event.date));
+    setMarkedDates(dates);
+  }, [bookings]);
 
-  const openRegistrationForm = (event: Event) => {
-    if (!user?.id) {
-      setAlert('You must be logged in to book an event.');
-      setTimeout(() => setAlert(null), 3000);
-      return;
-    }
-
-    setSelectedEvent(event);
-    setParticipants(1);
-    setShowForm(true);
-    setTicket(null);
-  };
-
-  const handleBookingSubmit = async () => {
-    if (!user || !selectedEvent) return;
-  
-    if (participants > selectedEvent.availableSeats) {
-      setAlert('Not enough seats available.');
-      setTimeout(() => setAlert(null), 3000);
-      return;
-    }
-  
+  const cancelBooking = async (eventId: number) => {
     try {
-       axios.post('http://localhost:5000/api/bookings/book', {
-        userId: user.id,
-        eventId: selectedEvent.id,
-        participants,
+      const userString = localStorage.getItem('user');
+      const user = userString ? JSON.parse(userString) : null;
+      const token = user.token
+      await axios.post('http://localhost:5000/api/bookings/cancel', {
+        userId: user?.id,
+        eventId,
+      },{
+        headers: {
+          authorization: `Bearer ${token}`,
+        },
       });
-  
-      setAllEvents((prev) =>
-        prev.map((e) =>
-          e.id === selectedEvent.id
-            ? { ...e, availableSeats: e.availableSeats - participants }
-            : e
-        )
-      );
-  
-      setTicket({ event: selectedEvent, participants, user });
-      setShowForm(false);
-      setAlert(`Successfully booked "${selectedEvent.name}"!`);
+      setAlert('Booking cancelled successfully.');
+      setBookings((prev) => prev.filter((b) => b.event.id !== eventId));
     } catch (error) {
-      setAlert('Booking failed. Please try again.');
-      console.error('Booking error:', error);
+      setAlert('Cancellation failed. Try again.');
+      console.error('Cancel error:', error);
     }
-  
     setTimeout(() => setAlert(null), 3000);
   };
-  
+
+  const handleDateClick = (date: Date) => {
+    setSelectedDate(date);
+    const eventsOnDate = bookings.filter((booking) => {
+      const bookingDate = new Date(booking.event.date);
+      return (
+        bookingDate.getFullYear() === date.getFullYear() &&
+        bookingDate.getMonth() === date.getMonth() &&
+        bookingDate.getDate() === date.getDate()
+      );
+    });
+    setSelectedEvents(eventsOnDate);
+  };
+
+  const tileClassName = ({ date, view }: { date: Date; view: string }) => {
+    if (view === 'month') {
+      const matched = markedDates.some(
+        (markedDate) =>
+          markedDate.getFullYear() === date.getFullYear() &&
+          markedDate.getMonth() === date.getMonth() &&
+          markedDate.getDate() === date.getDate()
+      );
+      return matched ? 'highlight-date' : null;
+    }
+    return null;
+  };
+
+  const handleCalendarToggle = () => {
+    setShowCalendar((prev) => !prev);
+    if (showCalendar) {
+      setSelectedDate(null);
+      setSelectedEvents([]);
+    }
+  };
 
   return (
-    <div className="container">
-      <h2 className="heading">Register Events</h2>
+    <>
+      <Navbar />
+      <div className="profile-container">
+        <h2>User Dashboard</h2>
 
-      {alert && <div className="alert">{alert}</div>}
+        {alert && <div className="alert">{alert}</div>}
 
-      {/* Search Bar */}
-      <div className="search-container">
-        <input
-          type="text"
-          className="search-input"
-          placeholder="Search by name, location, or date"
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-        />
-        <button className="search-button" onClick={handleSearch}>
-          Search
-        </button>
-      </div>
+        {user && (
+          <div className="user-info">
+            <p><strong>Name:</strong> {user.name}</p>
+            {user.email && <p><strong>Email:</strong> {user.email}</p>}
+          </div>
+        )}
 
-      {/* Event Cards */}
-      <div className="card-container">
-        {filteredEvents.length > 0 ? (
-          filteredEvents.map((event) => (
-            <div key={event.id} className="card">
-              <img src={event.banner} alt={event.name} className="card-image" />
-              <div className="card-content">
-                <h3 className="card-title">{event.name}</h3>
-                <p className="card-location">{event.location}</p>
-                <p className="card-date">
-                  {event.date} | {event.time}
-                </p>
-                <p className="card-description">{event.description}</p>
-                <p className="card-price">Price: ₹{event.price}</p>
-                <p className="card-seats">
-                  Seats Available: {event.seatsAvailable}
-                </p>
-                <button
-                  onClick={() => openRegistrationForm(event)}
-                  className="card-button"
-                >
-                  Register
-                </button>
+        <div className="calendar-toggle">
+          <button onClick={handleCalendarToggle} className="calendar-btn">
+            <FaCalendarAlt className="calendar-icon" /> {showCalendar ? 'Hide Calendar' : 'Show Calendar'}
+          </button>
+        </div>
+
+        {showCalendar && (
+          <div className="calendar-wrapper">
+            <Calendar
+              onClickDay={handleDateClick}
+              tileClassName={tileClassName}
+            />
+          </div>
+        )}
+
+        {showCalendar && selectedDate && (
+          <div className="event-details">
+            <h3>Events on {selectedDate.toDateString()}</h3>
+            {selectedEvents.length > 0 ? (
+              <div className="tickets-container">
+                {selectedEvents.map((booking) => (
+                  <div key={booking.id} className="ticket-card">
+                    <img src={booking.event.banner} alt={booking.event.name} className="ticket-image" />
+                    <div className="ticket-content">
+                      <h4>{booking.event.name}</h4>
+                      <p><strong>Location:</strong> {booking.event.location}</p>
+                      <p><strong>Date & Time:</strong> {booking.event.date} | {booking.event.time}</p>
+                      <p><strong>Participants:</strong> {booking.participants}</p>
+                      <p><strong>Total Paid:</strong> ₹{booking.event.price * booking.participants}</p>
+                    </div>
+                  </div>
+                ))}
               </div>
-            </div>
-          ))
+            ) : (
+              <p>No events booked on this date.</p>
+            )}
+          </div>
+        )}
+
+        <h3>Your Booked Tickets</h3>
+
+        {bookings.length > 0 ? (
+          <div className="tickets-container">
+            {bookings.map((booking) => (
+              <div key={booking.id} className="ticket-card">
+                <img src={booking.event.banner} alt={booking.event.name} className="ticket-image" />
+                <div className="ticket-content">
+                  <h4>{booking.event.name}</h4>
+                  <p><strong>Location:</strong> {booking.event.location}</p>
+                  <p><strong>Date & Time:</strong> {booking.event.date} | {booking.event.time}</p>
+                  <p><strong>Participants:</strong> {booking.participants}</p>
+                  <p><strong>Total Paid:</strong> ₹{booking.event.price * booking.participants}</p>
+                  <button className="cancel-button" onClick={() => cancelBooking(booking.event.id)}>
+                    Cancel Ticket
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
         ) : (
-          <p className="no-events">No events found matching your criteria.</p>
+          <p>You haven't booked any events yet.</p>
         )}
       </div>
-
-      {/* Registration Form */}
-      {showForm && selectedEvent && (
-        <div className="modal">
-          <div className="modal-content">
-            <h3>Register for {selectedEvent.name}</h3>
-            
-
-            <label>Number of Participants:</label>
-            <input
-              type="number"
-              min={1}
-              value={participants}
-              onChange={(e) => setParticipants(Number(e.target.value))}
-            />
-
-            <p>Total Payment: ₹{selectedEvent.price * participants}</p>
-
-            <button onClick={handleBookingSubmit} className="submit-button">
-              Pay & Book
-            </button>
-            <button onClick={() => setShowForm(false)} className="cancel-button">
-              Cancel
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* Ticket */}
-      {ticket && (
-  <div className="ticket">
-    <h3>Ticket Confirmed</h3>
-    <p><strong>Event:</strong> {ticket.event.name}</p>
-    <p><strong>Participants:</strong> {ticket.participants}</p>
-    <p><strong>Total Paid:</strong> ₹{ticket.event.price * ticket.participants}</p>
-    <button
-      className="cancel-button"
-      onClick={async () => {
-        try {
-          await axios.post('http://localhost:5000/api/bookings/cancel', {
-            userId: ticket.user.id,
-            eventId: ticket.event.id,
-          });
-
-          setAllEvents((prev) =>
-            prev.map((e) =>
-              e.id === ticket.event.id
-                ? { ...e, availableSeats: e.availableSeats + ticket.participants }
-                : e
-            )
-          );
-
-          setAlert('Booking cancelled successfully.');
-          setTicket(null);
-        } catch (error) {
-          console.error('Cancellation failed:', error);
-          setAlert('Cancellation failed. Please try again.');
-        }
-
-        setTimeout(() => setAlert(null), 3000);
-      }}
-    >
-      Cancel Booking
-    </button>
-  </div>
-)}
-
-    </div>
+    </>
   );
 };
 

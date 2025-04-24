@@ -8,20 +8,25 @@
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "test": "jest"
+    "test": "jest",
+    "test:coverage": "jest --coverage"
   },
   "dependencies": {
     "@fortawesome/fontawesome-free": "^6.7.2",
     "@fortawesome/free-solid-svg-icons": "^6.7.2",
     "@fortawesome/react-fontawesome": "^0.2.2",
+    "@react-google-maps/api": "^2.20.6",
     "aos": "^2.3.4",
     "axios": "^1.8.4",
     "jwt-decode": "^4.0.0",
+    "leaflet": "^1.9.4",
     "react": "^19.0.0",
+    "react-calendar": "^5.1.0",
     "react-dom": "^19.0.0",
     "react-icons": "^5.5.0",
     "react-modal": "^3.16.3",
-    "react-router-dom": "^7.5.0"
+    "react-router-dom": "^7.5.0",
+    "util": "^0.12.5"
   },
   "devDependencies": {
     "@babel/core": "^7.26.10",
@@ -34,6 +39,7 @@
     "@testing-library/user-event": "^14.6.1",
     "@types/aos": "^3.0.7",
     "@types/jest": "^29.5.14",
+    "@types/leaflet": "^1.9.17",
     "@types/react": "^19.0.10",
     "@types/react-dom": "^19.0.4",
     "@types/react-modal": "^3.16.3",

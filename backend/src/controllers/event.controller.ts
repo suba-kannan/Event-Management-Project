@@ -3,9 +3,11 @@ import { AppDataSource } from '../config/data-source';
 import { Event } from '../entities/Event';
 import { User } from '../entities/User'; 
 import { Repository } from 'typeorm';
+import { Booking } from '../entities/Booking';
 
 const eventRepository: Repository<Event> = AppDataSource.getRepository(Event);
 const userRepository: Repository<User> = AppDataSource.getRepository(User);
+const bookingRepository = AppDataSource.getRepository(Booking);
 
 export const createEvent = async (req: Request, res: Response) => {
   try {
@@ -55,8 +57,10 @@ export const getAllEvents = async (req: Request, res: Response) => {
 
 export const getOrganizerEvents = async (req: Request, res: Response) => {
   try {
+
     const organizerIdStr = req.params.organizerId; 
-    const organizerId = parseInt(organizerIdStr, 10); 
+    
+    const organizerId = parseInt(organizerIdStr); 
 
     if (isNaN(organizerId)) {
        res.status(400).json({ message: 'Invalid organizer ID provided' });
@@ -86,6 +90,7 @@ export const getOrganizerEvents = async (req: Request, res: Response) => {
 export const updateEvent = async (req: Request, res: Response) => {
   try {
     const eventId = parseInt(req.params.eventId, 10);
+    
     const organizerIdFromQuery = req.body.organizerId;  
     const { name, location, date, time, description, price, seatsAvailable, banner } = req.body;
 
@@ -96,18 +101,14 @@ export const updateEvent = async (req: Request, res: Response) => {
 
     const eventToUpdate = await eventRepository.findOne({
       where: { id: eventId },
-      relations: ['organizer'],
     });
+    
 
     if (!eventToUpdate) {
        res.status(404).json({ message: 'Event not found' });
        return;
     }
 
-    if (eventToUpdate.organizer.id !== parseInt(organizerIdFromQuery as string, 10)) {
-       res.status(403).json({ message: 'Unauthorized to update this event' });
-       return;
-    }
 
     if (name !== undefined) {
       eventToUpdate.name = name;
@@ -134,7 +135,7 @@ export const updateEvent = async (req: Request, res: Response) => {
       eventToUpdate.banner = banner;
     }
 
-    const updatedEvent = await eventRepository.save(eventToUpdate);
+    const updatedEvent = await eventRepository.save(eventToUpdate);    
 
     res.status(200).json({ message: 'Event updated successfully', event: updatedEvent });
     return
@@ -147,27 +148,25 @@ export const updateEvent = async (req: Request, res: Response) => {
 
 export const deleteEvent = async (req: Request, res: Response) => {
   try {
-    const eventId = req.params.eventId;
+    const eventId = parseInt(req.params.eventId);
+
     const eventToDelete = await eventRepository.findOne({
-      where: { id: parseInt(eventId, 10) },
-      relations: ['organizer'], 
+      where: { id: eventId },
     });
+
+    console.log("eventToDelete",eventToDelete);
+    
 
     if (!eventToDelete) {
        res.status(404).json({ message: 'Event not found' });
        return
     }
 
-    const currentOrganizerId = req.body.organizerId; 
+    await bookingRepository.delete({ event: { id: eventId } });
 
-    if (eventToDelete.organizer.id !== parseInt(currentOrganizerId, 10)) {
-       res.status(403).json({ message: 'Unauthorized to delete this event' });
-       return
-    }
+    await eventRepository.delete(eventId);
 
-    await eventRepository.remove(eventToDelete);
-
-     res.status(200).json({ message: 'Event deleted successfully', eventId: parseInt(eventId, 10) });
+     res.status(200).json({ message: 'Event deleted successfully', eventId });
      return
   } catch (error) {
     console.error('Error deleting event:', error);
@@ -175,3 +174,4 @@ export const deleteEvent = async (req: Request, res: Response) => {
      return
   }
 };
+

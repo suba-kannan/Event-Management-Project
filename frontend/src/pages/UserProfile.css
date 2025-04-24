@@ -1,0 +1,156 @@
+.user-profile {
+  padding: 40px 20px;
+}
+
+.user-profile-title {
+  text-align: center;
+  font-size: 32px;
+  margin-bottom: 30px;
+  color: #333;
+  
+}
+
+.user-details,
+.user-profile-form {
+  max-width: 500px;
+  margin: 0 auto 40px auto;
+  background-color: #fff;
+  padding: 25px;
+  border-radius: 12px;
+  box-shadow: 0 0 12px rgba(0, 0, 0, 0.05);
+}
+
+.user-profile-form label {
+  display: block;
+  margin-bottom: 12px;
+  font-weight: bold;
+}
+
+.user-profile-form input {
+  width: 100%;
+  padding: 8px;
+  margin-top: 4px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+}
+
+.save-btn,
+.edit-btn {
+  margin-top: 20px;
+  padding: 10px 16px;
+  background-color: #007bff;
+  border: none;
+  border-radius: 6px;
+  color: white;
+  cursor: pointer;
+}
+
+.edit-btn {
+  background-color: #28a745;
+}
+
+.user-registered-events {
+  padding: 10px 20px;
+  display: flex;
+  flex-direction: row;
+  overflow-x: auto;
+  gap: 16px;
+  align-items: flex-start;
+}
+
+.user-registered-events ul {
+  display: flex;
+  flex-direction: row;
+  gap: 16px;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.event-card {
+  background-color: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 350px;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  margin-bottom: 16px;
+  flex-shrink: 0;
+}
+
+.event-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+}
+
+.event-banner {
+  width: 100%;
+  height: 200px;
+  object-fit: cover;
+  border-radius: 12px 12px 0 0;
+}
+
+.card-content {
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.card-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  color: #333;
+}
+
+.card-location {
+  font-size: 1rem;
+  color: #6c757d;
+  margin-bottom: 0.5rem;
+}
+
+.card-date {
+  font-size: 0.875rem;
+  color: #6c757d;
+  margin-bottom: 1rem;
+}
+
+.card-description {
+  font-size: 1rem;
+  color: #495057;
+  margin-bottom: 1rem;
+}
+
+.card-price {
+  font-weight: 600;
+  margin-bottom: 1rem;
+}
+
+.card-seats {
+  color: #3085cf;
+  margin-bottom: 1rem;
+}
+
+.user-registered-events ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+  justify-content: flex-start;
+}
+
+@media (max-width: 768px) {
+  .user-registered-events ul {
+    justify-content: center;
+  }
+
+  .event-card {
+    max-width: 100%;
+  }
+}

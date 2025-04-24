@@ -1,16 +1,16 @@
 import express from 'express';
-import { Event } from '../entities/Event';
 import {  createEvent,
   getOrganizerEvents,
   updateEvent,
   deleteEvent,
   getAllEvents } from '../controllers/event.controller'; 
+import { authenticateJWT } from '../middleware/authMiddleware';
 
 const router = express.Router();
 
-router.post('/organizer-dashboard', createEvent); 
-router.get('/organizer-dashboard/:organizerId', getOrganizerEvents); 
-router.delete('/organizer-dashboard/:eventId', deleteEvent); 
-router.put('/organizer-dashboard/:eventId', updateEvent);
-router.get('/all', getAllEvents);
+router.post('/organizer-dashboard', authenticateJWT, createEvent); 
+router.get('/organizer-dashboard/:organizerId',authenticateJWT,  getOrganizerEvents); 
+router.delete('/organizer-dashboard/:eventId',authenticateJWT, deleteEvent); 
+router.put('/organizer-dashboard/:eventId',authenticateJWT, updateEvent);
+router.get('/all', authenticateJWT, getAllEvents);
 export default router;

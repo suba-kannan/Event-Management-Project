@@ -1,6 +1,9 @@
 {
   "compilerOptions": {
-    "jsx": "react-jsx"
+    "jsx": "react-jsx",
+    "esModuleInterop": true,
+    "skipLibCheck": true,  // Optional, helps with type checking issues
+    "strict": true  
   },
   "files": [],
   "references": [

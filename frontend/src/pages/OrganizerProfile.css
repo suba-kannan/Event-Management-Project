@@ -1,0 +1,73 @@
+.user-profile-container {
+    max-width: 600px;
+    margin: 50px auto;
+    padding: 2rem;
+    background: #f9f9f9;
+    border-radius: 12px;
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+  }
+  
+  .user-profile-title {
+    font-size: 2rem;
+    text-align: center;
+    margin-bottom: 2rem;
+    color: #333;
+  }
+  
+  .user-profile-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+  
+  .user-profile-form label {
+    display: flex;
+    flex-direction: column;
+    font-weight: bold;
+    color: #444;
+  }
+  
+  .user-profile-form input {
+    padding: 0.5rem;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    margin-top: 0.3rem;
+    font-size: 1rem;
+  }
+  
+  .save-btn,
+  .edit-btn {
+    margin-top: 1.5rem;
+    padding: 0.75rem 1.5rem;
+    background-color: #4caf50;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background 0.3s ease;
+  }
+  
+  .edit-btn {
+    background-color: #2196f3;
+  }
+  
+  .save-btn:hover,
+  .edit-btn:hover {
+    background-color: #3e8e41;
+  }
+  
+  .user-details {
+    padding: 1rem;
+    background: #fff;
+    border-radius: 8px;
+    line-height: 1.6;
+  }
+  
+  .user-loading {
+    text-align: center;
+    font-size: 1.2rem;
+    margin-top: 3rem;
+    color: #777;
+  }
+  

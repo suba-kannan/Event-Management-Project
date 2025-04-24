@@ -1,3 +1,4 @@
+import Navbar from '../components/Navbar';
 import './Feature.css';
 
 const features = [
@@ -35,6 +36,8 @@ const features = [
 
 const Feature = () => {
   return (
+    <>
+    <Navbar/>
     <div className="feature-page">
       <h2 className="feature-heading">Key Features</h2>
       <div className="feature-grid">
@@ -47,6 +50,7 @@ const Feature = () => {
         ))}
       </div>
     </div>
+    </>
   );
 };
 

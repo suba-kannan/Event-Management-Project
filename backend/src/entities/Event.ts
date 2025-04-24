@@ -4,13 +4,10 @@ import { Booking } from './Booking';
 
 @Entity()
 export class Event {
-  availableSeats: number;
-  static find() {
+  static findById(eventId: number) {
     throw new Error('Method not implemented.');
   }
-  static splice(existingEventIndex: any, arg1: number) {
-    throw new Error('Method not implemented.');
-  }
+
   @PrimaryGeneratedColumn()
   id: number;
 
@@ -43,4 +40,5 @@ export class Event {
 
   @OneToMany(() => Booking, (booking) => booking.event)
   bookings: Booking[];
+  availableSeats: any;
 }

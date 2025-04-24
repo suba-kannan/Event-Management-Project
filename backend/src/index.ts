@@ -18,6 +18,7 @@ app.use(cors({
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
     credentials: true, 
     optionsSuccessStatus: 204,
+    allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
 app.use('/api/auth', authRoutes);
@@ -27,6 +28,11 @@ app.use('/api/profile', profileRoutes);
 
 app.get('/', (req: Request, res: Response) => {
   res.send('Event Management System API is running!');
+});
+
+app.post('/cancel', (req: Request, res: Response) => {
+   res.status(200).json({ message: 'Edit cancelled successfully' });   
+   return
 });
 
 AppDataSource.initialize()

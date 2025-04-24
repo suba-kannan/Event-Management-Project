@@ -1,21 +1,48 @@
 import { Route, Routes } from 'react-router-dom';
-import Navbar from './components/Navbar';
-import ExploreEvents from './components/ExploreEvents';
+import ProfileRedirect from './components/ProfileRedirect';
+import Feature from './pages/Feature';
+import PrivateRoute from './components/PrivateRoute';
+import Home from './components/Home';
+import OrganizerExplore from './pages/OrganizerExplore';
+import UserExplore from './pages/UserExplore';
 import OrganizerDashboard from './pages/OrganizerDashboard';
 import UserDashboard from './pages/UserDashboard';
-import ProfileRedirect from './components/ProfileRedirect';
-import OrganizerProfilePage from './pages/OrganizerProfilePage';
-import Feature from './pages/Feature';
-import UserProfilePage from './pages/UserProfilePage';
-import PrivateRoute from './components/PrivateRoute';
+import UserProfile from './pages/UserProfile';
+import OrganizerProfile from './pages/OrganizerProfile';
 
 function App() {
   return (
     <Routes>
-      <Route path="/" element={<Navbar />} />
-      <Route path="/explore" element={<ExploreEvents />} />
+      <Route path="/" element={<Home />} />
       <Route path="/feature" element={<Feature />} />
-      
+
+      <Route
+        path="/explore"
+        element={
+          <PrivateRoute>
+            <ProfileRedirect destination="explore" />
+          </PrivateRoute>
+        }
+      />
+
+      <Route
+        path="/OrganizerExplore"
+        element={
+          <PrivateRoute allowedRoles={['Organizer']}>
+            <OrganizerExplore />
+          </PrivateRoute>
+        }
+      />
+
+      <Route
+        path="/UserExplore"
+        element={
+          <PrivateRoute allowedRoles={['User']}>
+            <UserExplore />
+          </PrivateRoute>
+        }
+      />
+
       <Route
         path="/dashboard"
         element={
@@ -26,7 +53,7 @@ function App() {
       />
 
       <Route
-        path="/organizer-dashboard"
+        path="/OrganizerDashboard"
         element={
           <PrivateRoute allowedRoles={['Organizer']}>
             <OrganizerDashboard />
@@ -35,7 +62,7 @@ function App() {
       />
 
       <Route
-        path="/user-dashboard"
+        path="/UserDashboard"
         element={
           <PrivateRoute allowedRoles={['User']}>
             <UserDashboard />
@@ -53,19 +80,19 @@ function App() {
       />
 
       <Route
-        path="/OrganizerProfilePage"
+        path="/OrganizerProfile"
         element={
           <PrivateRoute allowedRoles={['Organizer']}>
-            <OrganizerProfilePage />
+            <OrganizerProfile />
           </PrivateRoute>
         }
       />
 
       <Route
-        path="/UserProfilePage"
+        path="/UserProfile"
         element={
           <PrivateRoute allowedRoles={['User']}>
-            <UserProfilePage />
+            <UserProfile />
           </PrivateRoute>
         }
       />

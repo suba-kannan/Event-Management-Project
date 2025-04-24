@@ -1,0 +1,186 @@
+.hero-section {
+    background-image: url('https://img.freepik.com/free-vector/party-crowd-gold-bokeh-lights-stars_1048-12702.jpg?t=st=1744443998~exp=1744447598~hmac=8ce2140b21ba22a3d1d886ffa3e0b5eb114ce105685fa558c0b2947a09db3caf&w=900');
+    background-size: cover;
+    background-position: center;
+    height: 600px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    color: white;
+    padding: 20px;
+  }
+  
+  .hero-content {
+    max-width: 600px;
+  }
+  
+  .hero-content h1 {
+    font-size: 36px;
+    margin-bottom: 10px;
+    font-weight: bold;
+  }
+  
+  .hero-content p {
+    font-size: 18px;
+    margin-bottom: 20px;
+  }
+  
+  .cta-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+  }
+  
+  .cta-btn {
+    background-color: #1a8efc; 
+    color: white;
+    border: none;
+    padding: 15px 30px;
+    font-size: 16px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+  }
+  
+  .cta-btn:hover {
+    background-color: #ff4500; 
+  }
+
+
+  .features-section {
+  padding: 4rem 2rem;
+  background-color: #f9f9f9;
+  text-align: center;
+}
+
+.brand-showcase {
+  padding: 40px 20px;
+  background-color: #f9f9f9;
+  text-align: center;
+}
+
+.brand-title {
+  font-size: 24px;
+  font-weight: bold;
+  margin-bottom: 30px;
+  color: #333;
+}
+
+.brand-logos {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 40px;
+}
+
+.brand-logos img {
+  max-height:100px; 
+  max-width: 200px; 
+  object-fit: contain;
+  transition: transform 0.3s ease;
+}
+
+.brand-logos img:hover {
+  transform: scale(1.1);
+}
+
+.footer {
+  background: #0f1115;
+  color: #ccc;
+  padding: 50px 20px 30px;
+  font-family: 'Segoe UI', sans-serif;
+}
+
+.footer-container {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  max-width: 1200px;
+  margin: 0 auto;
+  gap: 40px;
+}
+
+.footer-section {
+  flex: 1 1 250px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.brand-name {
+  font-size: 24px;
+  font-weight: bold;
+  color: #fff;
+}
+
+.brand-name span {
+  color: #00d2ff;
+}
+
+.footer-section p {
+  max-width: 300px;
+  color: #999;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.footer-section h4 {
+  font-size: 16px;
+  color: #fff;
+  margin-bottom: 10px;
+}
+
+.footer-section a {
+  text-decoration: none;
+  color: #ccc;
+  font-size: 14px;
+  transition: color 0.3s ease;
+}
+
+.footer-section a:hover {
+  color: #00bfa6;
+}
+
+.social-icons {
+  display: flex;
+  gap: 15px;
+  margin-top: 5px;
+}
+
+.social-icons img {
+  width: 24px;
+  height: 24px;
+  filter: brightness(0) invert(1);
+  transition: transform 0.3s ease, filter 0.3s ease;
+}
+
+.social-icons img:hover {
+  transform: scale(1.1);
+  filter: brightness(1.5);
+}
+
+.footer-bottom {
+  border-top: 1px solid #333;
+  margin-top: 40px;
+  padding-top: 20px;
+  text-align: center;
+  color: #777;
+  font-size: 13px;
+}
+
+.navbar-welcome-popup {
+  position: fixed;
+  top: 15%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #ffffff;
+  color: #333;
+  padding: 1rem 2rem;
+  border-radius: 10px;
+  box-shadow: 0px 5px 20px rgba(0, 0, 0, 0.2);
+  font-size: 1.1rem;
+  font-weight: bold;
+  z-index: 1001;
+  animation: fadeInOut 2s ease-in-out;
+}

@@ -1,33 +1,31 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import { useEffect, useState } from 'react';
 import axios from 'axios';
-import './OrganizerDashboard.css';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faMapMarkerAlt, faCalendarAlt, faClock, faTag } from '@fortawesome/free-solid-svg-icons';
 import { jwtDecode } from 'jwt-decode';
+import './OrganizerDashboard.css';
+import Calendar from 'react-calendar';
+import 'react-calendar/dist/Calendar.css';
+import { faMapMarkerAlt, faCalendarAlt, faClock, faTag } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import Navbar from '../components/Navbar';
+import { FaCalendarAlt } from 'react-icons/fa';
 
-interface Event {
+type Event = {
   id: number;
   name: string;
+  description: string;
   location: string;
   date: string;
   time: string;
-  description: string;
   price: number;
-  seatsAvailable: number;
-  banner: string | null;
-}
-
-interface NewEventForm {
-  name: string;
-  location: string;
-  date: string;
-  time: string;
-  description: string;
-  price: string;
-  seatsAvailable: string;
   banner: string;
-  organizerId: string;
-}
+  seatsAvailable: number;
+  organizer: {
+    id: number;
+    name: string;
+    email: string;
+    role: string;
+  };
+};
 
 interface DecodedToken {
   id: number;
@@ -37,377 +35,261 @@ interface DecodedToken {
   exp: number;
 }
 
-const userString = localStorage.getItem('user');
-let userId:string;
-if (userString) {
-  const userObj = JSON.parse(userString);
-  const decoded: DecodedToken = jwtDecode<DecodedToken>(userObj.token);
-  userId = String(decoded.id)
-  console.log('User ID:', decoded.id);
-} 
-
 const OrganizerDashboard = () => {
-  const [newEvent, setNewEvent] = useState<NewEventForm>({
-    name: '',
-    location: '',
-    date: '',
-    time: '',
-    description: '',
-    price: '',
-    seatsAvailable: '',
-    banner: '',
-    organizerId: userId, 
-  });
-  const [message, setMessage] = useState('');
-  const [error, setError] = useState('');
-  const [organizerEvents, setOrganizerEvents] = useState<Event[]>([]);
-  const [isEditing, setIsEditing] = useState<number | null>(null); 
-  const [editEvent, setEditEvent] = useState<Partial<Event>>({}); 
-  const [showPastEvents, setShowPastEvents] = useState(false);
-  const [showCreateForm, setShowCreateForm] = useState(false);
-
-  const organizerId = userId;
-
-  const fetchOrganizerEvents = useCallback(async () => {
-    try {
-      const response = await axios.get(`http://localhost:5000/api/events/all`);
-      setOrganizerEvents(response.data.events);
-      console.log("HELLO",response.data.events);
-      
-    } catch (err: any) {
-      console.error('Error fetching organizer events:', err);
-      setError(err.response?.data?.message || 'Failed to fetch events');
-    }
-  }, [organizerId]);
-
+  const [events, setEvents] = useState<Event[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [editEventId, setEditEventId] = useState<number | null>(null);
+  const [editEventData, setEditEventData] = useState<Partial<Event>>({});
+  const [userId, setUserId] = useState<number | null>(null);
+  const [markedDates, setMarkedDates] = useState<Date[]>([]);
+  const [showCalendar, setShowCalendar] = useState(false);
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [selectedEvents, setSelectedEvents] = useState<Event[]>([]);
 
   useEffect(() => {
-    fetchOrganizerEvents();
-  }, [fetchOrganizerEvents]);
+    const fetchEvents = async () => {
+      try {
+        const userString = localStorage.getItem('user');
+        if (!userString) return;
+        const user = userString ? JSON.parse(userString) : null;
+        const token = user.token
 
-  const handleChangeNewEvent = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    setNewEvent({ ...newEvent, [e.target.name]: e.target.value });
-  };
+        const userObj = JSON.parse(userString);
+        const decoded: DecodedToken = jwtDecode(userObj.token);
+        setUserId(decoded.id);
 
-  const handleSubmitNewEvent = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setMessage('');
-    setError('');
+        const response = await axios.get(`http://localhost:5000/api/events/all`, {
+          headers: {
+            authorization: `Bearer ${token}`,
+          },
+          withCredentials: true,
+        });
+        const allEvents: Event[] = response.data.events;
+        const userEvents = allEvents.filter(event => event.organizer?.id === decoded.id);
+        setEvents(userEvents);
+      } catch (error) {
+        console.error('Error fetching events:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-    try {
-      const response = await axios.post('http://localhost:5000/api/events/organizer-dashboard', newEvent);
-      setMessage(response.data.message);
-      setNewEvent({
-        name: '',
-        location: '',
-        date: '',
-        time: '',
-        description: '',
-        price: '',
-        seatsAvailable: '',
-        banner: '',
-        organizerId: userId,
-      });
-      setShowCreateForm(false);
-      fetchOrganizerEvents();
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to create event');
-      console.error('Error creating event:', err);
-    }
-  };
+    fetchEvents();
+  }, []);
 
-  const handleDeleteEvent = async (eventId: number) => {
-    if (window.confirm('Are you sure you want to delete this event?')) {
+  useEffect(() => {
+    const dates = events.map(e => new Date(e.date));
+    setMarkedDates(dates);
+  }, [events]);
+
+  const handleDelete = async (eventId: number) => {
+    if (!userId) return;
+    const userString = localStorage.getItem('user');
+    if (!userString) return;
+    const user = userString ? JSON.parse(userString) : null;
+    const token = user.token
+
+    if (window.confirm("Are you sure you want to delete this event?")) {
       try {
         await axios.delete(`http://localhost:5000/api/events/organizer-dashboard/${eventId}`, {
-          data: { organizerId: organizerId },
+          headers: {
+            authorization: `Bearer ${token}`,
+          },
+          withCredentials: true,
         });
-        setMessage('Event deleted successfully');
-        setError('');
-        fetchOrganizerEvents();
-      } catch (err: any) {
-        setError(err.response?.data?.message || 'Failed to delete event');
-        console.error('Error deleting event:', err);
+
+        setEvents(events.filter(event => event.id !== eventId));
+      } catch (error) {
+        console.error("Failed to delete event", error);
       }
     }
   };
 
   const handleEditClick = (event: Event) => {
-    setIsEditing(event.id);
-    setEditEvent({ ...event });
+    setEditEventId(event.id);
+    setEditEventData({ ...event });
   };
 
-  const handleChangeEditEvent = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    setEditEvent({ ...editEvent, [e.target.name]: e.target.value });
+  const handleEditChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    setEditEventData({ ...editEventData, [e.target.name]: e.target.value });
   };
 
   const handleSaveEdit = async () => {
-    if (isEditing && editEvent.id) {
+    if (editEventId && userId) {
       try {
-        const response = await axios.put(
-          `http://localhost:5000/api/events/organizer-dashboard/${editEvent.id}`,
+        const userString = localStorage.getItem('user');
+        const user = userString ? JSON.parse(userString) : null;
+        const token = user.token
+
+        await axios.put(
+          `http://localhost:5000/api/events/organizer-dashboard/${editEventId}`,
+          editEventData,
           {
-            ...editEvent,
-            organizerId: userId,
+            headers: {
+              authorization: `Bearer ${token}`
+            }
           }
         );
-        setMessage(response.data.message || 'Event updated successfully');
-        setError('');
-        setIsEditing(null);
-        setEditEvent({});
-        fetchOrganizerEvents();
-      } catch (err: any) {
-        setError(err.response?.data?.message || 'Failed to update event');
-        console.error('Error updating event:', err);
+        setEditEventId(null);
+        setEditEventData({});
+        const updatedEvents = await axios.get('http://localhost:5000/api/events/all', {
+          headers: {
+            authorization: `Bearer ${token}`,
+          },
+          withCredentials: true,
+        });
+        setEvents(updatedEvents.data.events.filter((event: Event) => event.organizer?.id === userId));
+      } catch (error) {
+        console.error('Failed to update event', error);
       }
     }
   };
 
-  const handleCancelEdit = () => {
-    setIsEditing(null);
-    setEditEvent({});
+  const handleCancelEdit = async () => {
+    try {
+      const response = await fetch('http://localhost:5000/cancel', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      const data = await response.json();
+      if (response.ok) {
+        alert(data.message);
+      } else {
+        console.error('Error:', data.message || 'Unknown error');
+      }
+    } catch (error) {
+      console.error('Network error:', error);
+    }
   };
 
-  const handleShowCreateForm = () => {
-    setShowCreateForm(true);
-  };
-
-  const handleCancelCreateForm = () => {
-    setShowCreateForm(false);
-    setNewEvent({
-      name: '',
-      location: '',
-      date: '',
-      time: '',
-      description: '',
-      price: '',
-      seatsAvailable: '',
-      banner: '',
-      organizerId: userId,
+  const handleDateClick = (date: Date) => {
+    setSelectedDate(date);
+    const eventsOnDate = events.filter(event => {
+      const eventDate = new Date(event.date);
+      return (
+        eventDate.getFullYear() === date.getFullYear() &&
+        eventDate.getMonth() === date.getMonth() &&
+        eventDate.getDate() === date.getDate()
+      );
     });
+    setSelectedEvents(eventsOnDate);
   };
 
-  const currentDate = new Date().toISOString().split('T')[0];
+  const tileClassName = ({ date, view }: { date: Date; view: string }) => {
+    if (view === 'month') {
+      const matched = markedDates.some(
+        (markedDate) =>
+          markedDate.getFullYear() === date.getFullYear() &&
+          markedDate.getMonth() === date.getMonth() &&
+          markedDate.getDate() === date.getDate()
+      );
+      return matched ? 'highlight-date' : null;
+    }
+    return null;
+  };
 
-  const upcomingEvents = organizerEvents.filter(event => event.date >= currentDate);
-  const pastEvents = organizerEvents.filter(event => event.date < currentDate);
+  const handleCalendarToggle = () => {
+    setShowCalendar(prev => !prev);
+    if (showCalendar) {
+      setSelectedDate(null);
+      setSelectedEvents([]);
+    }
+  };
 
-  const displayedEvents = showPastEvents ? pastEvents : upcomingEvents;
+  if (loading) return <p className="loading">Loading...</p>;
 
   return (
-    <div className="organizer-dashboard with-background">
-      <div className="dashboard-content-wrapper">
-        <h2>Organizer Dashboard</h2>
-        {message && <p className="message">{message}</p>}
-        {error && <p className="error">{error}</p>}
+    <>
+      <Navbar />
+      <div className="organizer-container">
+        <h1 className="organizer-heading">Your Created Events</h1>
+        <div className="calendar-toggle">
+          <button onClick={handleCalendarToggle} className="calendar-btn">
+            <FaCalendarAlt className="calendar-icon" /> {showCalendar ? 'Hide Calendar' : 'Show Calendar'}
+          </button>
+        </div>
 
-        {!showCreateForm && (
-          <button onClick={handleShowCreateForm} className="create-event-button">Create New Event</button>
-        )}
-
-        {showCreateForm && (
-          <div className="form-container">
-            <h3>Create New Event</h3>
-            <form onSubmit={handleSubmitNewEvent} className="new-event-form">
-              <div>
-                <label htmlFor="name">Event Name:</label>
-                <input type="text" id="name" name="name" value={newEvent.name} onChange={handleChangeNewEvent} required />
-              </div>
-              <div>
-                <label htmlFor="location">Location:</label>
-                <input type="text" id="location" name="location" value={newEvent.location} onChange={handleChangeNewEvent} required />
-              </div>
-              <div>
-                <label htmlFor="date">Date:</label>
-                <input type="date" id="date" name="date" value={newEvent.date} onChange={handleChangeNewEvent} required />
-              </div>
-              <div>
-                <label htmlFor="time">Time:</label>
-                <input type="time" id="time" name="time" value={newEvent.time} onChange={handleChangeNewEvent} required />
-              </div>
-              <div>
-                <label htmlFor="description">Description:</label>
-                <textarea id="description" name="description" value={newEvent.description} onChange={handleChangeNewEvent} required />
-              </div>
-              <div>
-                <label htmlFor="price">Price:</label>
-                <input type="number" id="price" name="price" value={newEvent.price} onChange={handleChangeNewEvent} required />
-              </div>
-              <div>
-                <label htmlFor="seatsAvailable">Seats Available:</label>
-                <input type="number" id="seatsAvailable" name="seatsAvailable" value={newEvent.seatsAvailable} onChange={handleChangeNewEvent} required />
-              </div>
-              <div>
-                <label htmlFor="banner">Banner URL:</label>
-                <input type="text" id="banner" name="banner" value={newEvent.banner} onChange={handleChangeNewEvent} />
-              </div>
-              <button type="submit">Create Event</button>
-              <button type="button" onClick={handleCancelCreateForm} className="cancel-button">
-                Cancel
-              </button>
-            </form>
+        {showCalendar && (
+          <div className="calendar-wrapper">
+            <Calendar
+              onClickDay={handleDateClick}
+              tileClassName={tileClassName}
+              value={selectedDate || new Date()}
+            />
+            {selectedDate && (
+              <>
+                <h3>Events on {selectedDate.toDateString()}</h3>
+                <ul className="event-list">
+                  {selectedEvents.length === 0 ? (
+                    <p>No events on this date.</p>
+                  ) : (
+                    selectedEvents.map(event => (
+                      <li key={event.id} className="eventt-card">
+                        <img src={event.banner} alt={event.name} className="eventt-image" />
+                        <h4>{event.name}</h4>
+                        <p><FontAwesomeIcon icon={faMapMarkerAlt} /> {event.location}</p>
+                        <p><FontAwesomeIcon icon={faCalendarAlt} /> {event.date}</p>
+                        <p><FontAwesomeIcon icon={faClock} /> {event.time}</p>
+                        <p><FontAwesomeIcon icon={faTag} /> ₹{event.price}</p>
+                        <p>Available Seats: {event.seatsAvailable}</p>
+                        <p>{event.description.substring(0, 100)}...</p>
+                      </li>
+                    ))
+                  )}
+                </ul>
+              </>
+            )}
           </div>
         )}
 
-        <h3>Events</h3>
-        <div className="events-toggle">
-          <button
-            className={!showPastEvents ? 'active' : ''}
-            onClick={() => setShowPastEvents(false)}
-          >
-            Upcoming Events
-          </button>
-          <button
-            className={showPastEvents ? 'active' : ''}
-            onClick={() => setShowPastEvents(true)}
-          >
-            Past Events
-          </button>
-        </div>
 
-        <div className="events-grid">
-          {displayedEvents.length === 0 ? (
-            <p>No {showPastEvents ? 'past' : 'upcoming'} events.</p>
-          ) : (
-            displayedEvents.map((event) => (
-              <div key={event.id} className={`event-card ${isEditing === event.id ? 'editing' : ''}`}>
-                {event.banner && (
-                  <div className="event-banner">
-                    <img
-                      src={event.banner}
-                      alt={event.name}
-                      onError={(e) => {
-                        (e.currentTarget as HTMLImageElement).onerror = null;
-                        (e.currentTarget as HTMLImageElement).src =
-                          'https://via.placeholder.com/300x150?text=No+Image';
-                      }}
-                    />
+
+        {events.length === 0 ? (
+          <p className="no-events">No created events</p>
+        ) : (
+          <ul className="eventt-list">
+            {events.map((event) => (
+              <li key={event.id} className="eventt-card">
+                {editEventId === event.id ? (
+                  <div className="editt-form">
+                    <input name="name" value={editEventData.name || ''} onChange={handleEditChange} placeholder="Event Name" />
+                    <textarea name="description" value={editEventData.description || ''} onChange={handleEditChange} placeholder="Description" />
+                    <input name="location" value={editEventData.location || ''} onChange={handleEditChange} placeholder="Location" />
+                    <input name="date" type="date" value={editEventData.date || ''} onChange={handleEditChange} />
+                    <input name="time" type="time" value={editEventData.time || ''} onChange={handleEditChange} />
+                    <input name="seatsAvailable" type="number" value={editEventData.seatsAvailable || ''} onChange={handleEditChange} />
+                    <input name="price" type="number" value={editEventData.price?.toString() || ''} onChange={handleEditChange} />
+                    <input name="banner" value={editEventData.banner || ''} onChange={handleEditChange} placeholder="Banner URL" />
+                    <div className="editt-actions">
+                      <button onClick={handleSaveEdit}>Save</button>
+                      <button onClick={handleCancelEdit}>Cancel</button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="eventt-details">
+                    <img src={event.banner} alt={event.name} className="eventt-image" />
+                    <h4>{event.name}</h4>
+                    <p><FontAwesomeIcon icon={faMapMarkerAlt} /> {event.location}</p>
+                    <p><FontAwesomeIcon icon={faCalendarAlt} /> {event.date}</p>
+                    <p><FontAwesomeIcon icon={faClock} /> {event.time}</p>
+                    <p><FontAwesomeIcon icon={faTag} /> ₹{event.price}</p>
+                    <p>Available Seats: {event.seatsAvailable}</p>
+                    <p>{event.description.substring(0, 100)}...</p>
+                    <div className="eventt-actions">
+                      <button onClick={() => handleEditClick(event)}>Edit</button>
+                      <button onClick={() => handleDelete(event.id)}>Delete</button>
+                    </div>
                   </div>
                 )}
-                <div className="event-details">
-                  <h4>{event.name}</h4>
-                  <p className="location">
-                    <FontAwesomeIcon icon={faMapMarkerAlt} /> {event.location}
-                  </p>
-                  <p className="date">
-                    <FontAwesomeIcon icon={faCalendarAlt} /> {event.date}
-                  </p>
-                  <p className="time">
-                    <FontAwesomeIcon icon={faClock} /> {event.time}
-                  </p>
-                  <p className="price">
-                    <FontAwesomeIcon icon={faTag} /> ₹{event.price}
-                  </p>
-                  <p className="seats">Available Seats: {event.seatsAvailable}</p>
-                  <p className="description">{event.description.substring(0, 100)}...</p>
-                </div>
-                <div className="event-actions">
-                  {isEditing === event.id ? (
-                    <div className="edit-event-form">
-                      <strong>Edit Event</strong>
-                      <div>
-                        <label htmlFor={`edit-name-${event.id}`}>Name:</label>
-                        <input
-                          type="text"
-                          id={`edit-name-${event.id}`}
-                          name="name"
-                          value={editEvent.name || ''}
-                          onChange={handleChangeEditEvent}
-                        />
-                      </div>
-                      <div>
-                        <label htmlFor={`edit-location-${event.id}`}>Location:</label>
-                        <input
-                          type="text"
-                          id={`edit-location-${event.id}`}
-                          name="location"
-                          value={editEvent.location || ''}
-                          onChange={handleChangeEditEvent}
-                        />
-                      </div>
-                      <div>
-                        <label htmlFor={`edit-date-${event.id}`}>Date:</label>
-                        <input
-                          type="date"
-                          id={`edit-date-${event.id}`}
-                          name="date"
-                          value={editEvent.date || ''}
-                          onChange={handleChangeEditEvent}
-                        />
-                      </div>
-                      <div>
-                        <label htmlFor={`edit-time-${event.id}`}>Time:</label>
-                        <input
-                          type="time"
-                          id={`edit-time-${event.id}`}
-                          name="time"
-                          value={editEvent.time || ''}
-                          onChange={handleChangeEditEvent}
-                        />
-                      </div>
-                      <div>
-                        <label htmlFor={`edit-description-${event.id}`}>Description:</label>
-                        <textarea
-                          id={`edit-description-${event.id}`}
-                          name="description"
-                          value={editEvent.description || ''}
-                          onChange={handleChangeEditEvent}
-                        />
-                      </div>
-                      <div>
-                        <label htmlFor={`edit-price-${event.id}`}>Price:</label>
-                        <input
-                          type="number"
-                          id={`edit-price-${event.id}`}
-                          name="price"
-                          value={editEvent.price || ''}
-                          onChange={handleChangeEditEvent}
-                        />
-                      </div>
-                      <div>
-                        <label htmlFor={`edit-seatsAvailable-${event.id}`}>
-                          Seats Available:
-                        </label>
-                        <input
-                          type="number"
-                          id={`edit-seatsAvailable-${event.id}`}
-                          name="seatsAvailable"
-                          value={editEvent.seatsAvailable || ''}
-                          onChange={handleChangeEditEvent}
-                        />
-                      </div>
-                      <div>
-                        <label htmlFor={`edit-banner-${event.id}`}>Banner URL:</label>
-                        <input
-                          type="text"
-                          id={`edit-banner-${event.id}`}
-                          name="banner"
-                          value={editEvent.banner || ''}
-                          onChange={handleChangeEditEvent}
-                        />
-                      </div>
-                      <button onClick={handleSaveEdit}>Save</button>
-                      <button onClick={handleCancelEdit} className="cancel-button">
-                        Cancel
-                      </button>
-                    </div>
-                  ) : (
-                    <div className="event-item">
-                      <div className="event-actions">
-                        <button onClick={() => handleEditClick(event)} className="edit-button">
-                          Edit
-                        </button>
-                        <button onClick={() => handleDeleteEvent(event.id)}>Delete</button>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-            ))
-          )}
-        </div>
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
-    </div>
+    </>
   );
 };
 

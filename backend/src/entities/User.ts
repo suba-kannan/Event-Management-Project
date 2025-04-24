@@ -6,12 +6,21 @@ import { Booking } from './Booking';
 
 @Entity()
 export class User {
+  static email(email: any, name: any, participants: number) {
+    throw new Error('Method not implemented.');
+  }
+  static findById(userId: number) {
+    throw new Error('Method not implemented.');
+  }
  
   @PrimaryGeneratedColumn()
   id: number;
 
   @Column()
   name: string;
+
+  @Column()
+  phone: string;
 
   @Column({ unique: true })
   email: string;
@@ -27,6 +36,7 @@ export class User {
 
   @OneToMany(() => Booking, (booking) => booking.user)
   bookings: Booking[];
+  profilePicture: any;
 
   @BeforeInsert()
   @BeforeUpdate()
