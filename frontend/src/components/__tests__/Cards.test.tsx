@@ -1,9 +1,7 @@
-// FeatureCards.test.tsx
 import { render, screen } from '@testing-library/react';
 import FeatureCards from '../Card';
 import '@testing-library/jest-dom';
 
-// Mock data for the features
 const mockFeatures = [
   {
     title: 'Host virtual events too',
@@ -35,12 +33,10 @@ const mockFeatures = [
   },
 ];
 
-// Test the FeatureCard component
 describe('FeatureCards Component', () => {
   test('renders all feature cards', () => {
     render(<FeatureCards />);
 
-    // Check if all feature titles are rendered
     mockFeatures.forEach((feature) => {
       expect(screen.getByText(feature.title)).toBeInTheDocument();
       expect(screen.getByText(feature.description)).toBeInTheDocument();
@@ -59,7 +55,6 @@ describe('FeatureCards Component', () => {
   test('renders cards with reverse class when reverse prop is true', () => {
     render(<FeatureCards />);
 
-    // Check if the second feature card (reverse prop) has the "reverse" class
     const reverseCard = screen.getByText(mockFeatures[1].title).closest('.feature-card');
     expect(reverseCard).toHaveClass('reverse');
   });
@@ -67,7 +62,6 @@ describe('FeatureCards Component', () => {
   test('does not add reverse class when reverse prop is not provided', () => {
     render(<FeatureCards />);
 
-    // Check if the first and third feature cards don't have the "reverse" class
     const firstCard = screen.getByText(mockFeatures[0].title).closest('.feature-card');
     const thirdCard = screen.getByText(mockFeatures[2].title).closest('.feature-card');
 
