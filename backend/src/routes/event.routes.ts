@@ -12,5 +12,5 @@ router.post('/organizer-dashboard', authenticateJWT, createEvent);
 router.get('/organizer-dashboard/:organizerId',authenticateJWT,  getOrganizerEvents); 
 router.delete('/organizer-dashboard/:eventId',authenticateJWT, deleteEvent); 
 router.put('/organizer-dashboard/:eventId',authenticateJWT, updateEvent);
-router.get('/all', authenticateJWT, getAllEvents);
+router.get('/all', getAllEvents);
 export default router;

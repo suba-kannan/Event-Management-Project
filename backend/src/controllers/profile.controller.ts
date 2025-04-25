@@ -12,7 +12,7 @@ export const getUserProfile = async (req: Request, res: Response): Promise<void>
 
   try {
     const token = authHeader.split(' ')[1];
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret') as { id: number };
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || '') as { id: number };
 
     const userRepository = AppDataSource.getRepository(User);
     const user = await userRepository.findOneBy({ id: decoded.id });
@@ -43,7 +43,7 @@ export const editUserProfile = async (req: Request, res: Response): Promise<void
 
   try {
     const token = authHeader.split(' ')[1];
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret') as { id: number };
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || '') as { id: number };
 
     const userRepository = AppDataSource.getRepository(User);
     const user = await userRepository.findOneBy({ id: decoded.id });

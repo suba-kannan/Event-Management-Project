@@ -71,9 +71,7 @@ function Navbar() {
           <ul className={`nav-links ${isMobileMenuOpen ? 'mobile-open' : ''}`}>
             <li><Link to="/" onClick={() => setIsMobileMenuOpen(false)}>Home</Link></li>
             <li><Link to="/feature" onClick={() => setIsMobileMenuOpen(false)}>Features</Link></li>
-              <li>
-              <Link to="/explore" onClick={(e) => handleProtectedClick(e, '/explore')}>Explore</Link>
-            </li>
+            <li><Link to="/explore" onClick={() => setIsMobileMenuOpen(false)}>Explore</Link></li>
             <li>
               <Link to="/dashboard" onClick={(e) => handleProtectedClick(e, '/dashboard')}>Dashboard</Link>
             </li>

@@ -11,10 +11,21 @@ import UserProfile from './pages/UserProfile';
 import OrganizerProfile from './pages/OrganizerProfile';
 
 function App() {
+  let user = null;
+  try {
+    user = JSON.parse(localStorage.getItem('user') || 'null');
+  } catch (error) {
+    console.error('Error parsing user from localStorage:', error);
+  }
+
+  const role = user?.role;
+
   return (
     <Routes>
       <Route path="/" element={<Home />} />
       <Route path="/feature" element={<Feature />} />
+
+      <Route path="/explore" element={role === 'Organizer' ? <OrganizerExplore /> : <UserExplore />} />
 
       <Route
         path="/explore"

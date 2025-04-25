@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import './UserExplore.css';
 import Navbar from '../components/Navbar';
+import LoginSignup from '../components/LoginSignup';
 
 type Event = {
   remainingTime: string | null;
@@ -35,6 +36,8 @@ const UserExplore: React.FC = () => {
 
   const [eventNames, setEventNames] = useState<string[]>([]);
   const [selectedEventName, setSelectedEventName] = useState<string>('');
+  const [isLoginModalVisible, setLoginModalVisible] = useState(false);
+  const [pendingEvent, setPendingEvent] = useState<Event | null>(null);
 
   const storedUser = localStorage.getItem('user');
   const user: User | null = storedUser ? JSON.parse(storedUser) : null;
@@ -44,7 +47,7 @@ const UserExplore: React.FC = () => {
       try {
         const userString = localStorage.getItem('user');
         const user = userString ? JSON.parse(userString) : null;
-        const token = user.token;
+        const token = user?.token;
         const res = await axios.get('http://localhost:5000/api/events/all', {
           headers: {
             authorization: `Bearer ${token}`,
@@ -79,10 +82,24 @@ const UserExplore: React.FC = () => {
       );
     }, 1000);
 
-    return () => clearInterval(interval); 
+    return () => clearInterval(interval);
   }, [filteredEvents]);
 
+  const handleEventNameChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+    const name = event.target.value;
+    setSelectedEventName(name);
+  
+    setSearchQuery('');
+    
+    const filtered = name === '' 
+      ? allEvents 
+      : allEvents.filter((event) => event.name === name);
+    setFilteredEvents(filtered);
+  };
+  
   const handleSearch = () => {
+    setSelectedEventName('');
+    
     const query = searchQuery.toLowerCase();
     const filtered = allEvents.filter(
       (event) =>
@@ -93,21 +110,12 @@ const UserExplore: React.FC = () => {
     );
     setFilteredEvents(filtered);
   };
-
-  const handleEventNameChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
-    const name = event.target.value;
-    setSelectedEventName(name);
-
-    const filtered = allEvents.filter((event) =>
-      name === '' || event.name === name
-    );
-    setFilteredEvents(filtered);
-  };
+  
 
   const openRegistrationForm = (event: Event) => {
     if (!user?.id) {
-      setAlert('You must be logged in to book an event.');
-      setTimeout(() => setAlert(null), 6000);
+      setPendingEvent(event);
+      setLoginModalVisible(true);
       return;
     }
 
@@ -121,6 +129,16 @@ const UserExplore: React.FC = () => {
     setParticipants(1);
     setShowForm(true);
     setTicket(null);
+  };
+
+  const handleLoginSuccess = () => {
+    setLoginModalVisible(false);
+    if (pendingEvent) {
+      setSelectedEvent(pendingEvent);
+      setParticipants(1);
+      setShowForm(true);
+      setPendingEvent(null);
+    }
   };
 
   const handleBookingSubmit = async () => {
@@ -153,7 +171,6 @@ const UserExplore: React.FC = () => {
             : e
         )
       );
-      
 
       setTicket({ event: selectedEvent, participants, user });
       setShowForm(false);
@@ -199,7 +216,7 @@ const UserExplore: React.FC = () => {
           <button className="search-button" onClick={handleSearch}>
             Search
           </button>
-          
+
           <div className="event-name-dropdown">
             <select value={selectedEventName} onChange={handleEventNameChange}>
               <option value="">All Events</option>
@@ -228,11 +245,8 @@ const UserExplore: React.FC = () => {
                     {event.date} | {event.time}
                   </p>
                   <p className="card-description">{event.description}</p>
-                  <p className="card-price">Price: ₹{event.price}</p>
-                  <p className="card-seats">
-                    Seats Available: {event.seatsAvailable}
-                  </p>
-
+                  <p className="card-price">${event.price}</p>
+                  <p className="card-seats">Seats Available: {event.seatsAvailable}</p>
                   <p className="card-countdown">
                     {event.remainingTime ? (
                       `Time Left: ${event.remainingTime}`
@@ -247,35 +261,14 @@ const UserExplore: React.FC = () => {
                   >
                     {event.seatsAvailable <= 0 ? 'Sold Out' : 'Register'}
                   </button>
+
                 </div>
               </div>
             ))
           ) : (
-            <p className="no-events">No events found matching your criteria.</p>
+            <p>No events found. Please try adjusting your search or filters.</p>
           )}
         </div>
-
-        {showForm && selectedEvent && (
-          <div className="modal">
-            <div className="modal-content">
-              <h3>Register for {selectedEvent.name}</h3>
-              <label>Number of Participants:</label>
-              <input
-                type="number"
-                min={1}
-                value={participants}
-                onChange={(e) => setParticipants(Number(e.target.value))}
-              />
-              <p>Total Payment: ₹{selectedEvent.price * participants}</p>
-              <button onClick={handleBookingSubmit} className="submit-button">
-                Pay & Book
-              </button>
-              <button onClick={() => setShowForm(false)} className="cancel-button">
-                Cancel
-              </button>
-            </div>
-          </div>
-        )}
 
         {ticket && (
           <div className="ticket">
@@ -290,7 +283,6 @@ const UserExplore: React.FC = () => {
                   const userString = localStorage.getItem('user');
                   const user = userString ? JSON.parse(userString) : null;
                   const token = user.token;
-                  console.log("TOKEN", token);
                   await axios.post('http://localhost:5000/api/bookings/cancel', {
                     userId: ticket.user.id,
                     eventId: ticket.event.id,
@@ -321,6 +313,35 @@ const UserExplore: React.FC = () => {
               Cancel Booking
             </button>
           </div>
+        )}
+
+        {showForm && selectedEvent && (
+          <div className="modal">
+            <div className="modal-content">
+              <h3>Register for {selectedEvent.name}</h3>
+              <label>Number of Participants:</label>
+              <input
+                type="number"
+                min={1}
+                value={participants}
+                onChange={(e) => setParticipants(Number(e.target.value))}
+              />
+              <p>Total Payment: ₹{selectedEvent.price * participants}</p>
+              <button onClick={handleBookingSubmit} className="submit-button">
+                Pay & Book
+              </button>
+              <button onClick={() => setShowForm(false)} className="cancel-button">
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
+
+        {isLoginModalVisible && (
+          <LoginSignup
+            onClose={() => setLoginModalVisible(false)}
+            onSignIn={handleLoginSuccess}
+          />
         )}
       </div>
     </>

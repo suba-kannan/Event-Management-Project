@@ -3,15 +3,15 @@ import nodemailer from 'nodemailer';
 const transporter = nodemailer.createTransport({
   service: 'gmail',
   auth: {
-    user: 'suba.k1409@gmail.com',
-    pass: 'tklsqbdqgliqpppu',
+    user: process.env.SENDER_EMAIL,
+    pass: process.env.SENDER_PASSWORD,
   },
 });
 
 export const sendBookingConfirmation = async (userEmail: string, eventName: string, participants: number, totalPrice: number) => {
   const mailOptions = {
-    from: 'suba.k1409@gmail.com',
-    to: 'subakannan1409@gmail.com', 
+    from: process.env.SENDER_EMAIL,
+    to: process.env.RECEIVER_EMAIL,
     subject: 'Booking Confirmation',
     text: `Your booking for the event "${eventName}" has been confirmed. \n\nParticipants👤: ${participants} \nTotal Price💵: ₹${totalPrice}.`, 
   };
@@ -26,8 +26,8 @@ export const sendBookingConfirmation = async (userEmail: string, eventName: stri
 
 export const sendBookingCancellation = async (userEmail: string, eventName: string, participants: number) => {
   const mailOptions = {
-    from: 'suba.k1409@gmail.com',
-    to: 'subakannan1409@gmail.com',
+    from: process.env.SENDER_EMAIL,
+    to: process.env.RECEIVER_EMAIL,
     subject: 'Booking Cancellation',
     text: `Your booking for the event "${eventName}" has been successfully canceled. \n\nParticipants👤: ${participants}`,
   };
