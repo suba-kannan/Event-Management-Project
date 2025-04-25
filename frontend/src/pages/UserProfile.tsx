@@ -7,7 +7,6 @@ interface User {
   name: string;
   phone: string;
   email: string;
-  role: string;
 }
 
 const UserProfile: React.FC = () => {
@@ -17,7 +16,6 @@ const UserProfile: React.FC = () => {
     name: '',
     phone: '',
     email: '',
-    role: '',
   });
 
   const token = localStorage.getItem('token');
@@ -38,7 +36,6 @@ const UserProfile: React.FC = () => {
           name: response.data.name,
           phone: response.data.phone,
           email: response.data.email,
-          role: response.data.role,
 
         });
       } catch (error) {
@@ -94,10 +91,6 @@ const UserProfile: React.FC = () => {
             Email:
             <input type="email" name="email" value={formData.email} onChange={handleChange} />
           </label>
-          <label>
-            Role:
-            <input type="text" name="role" value={formData.role} onChange={handleChange} />
-          </label>
           <button type="submit" className="save-btn">Save Changes</button>
         </form>
       ) : (
@@ -105,7 +98,6 @@ const UserProfile: React.FC = () => {
           <p><strong>Name:</strong> {user.name}</p>
           <p><strong>Phone:</strong> {user.phone}</p>
           <p><strong>Email:</strong> {user.email}</p>
-          <p><strong>Role:</strong> {user.role}</p>
           <button className="edit-btn" onClick={() => setEditMode(true)}>Edit Profile</button>
         </div>
       )}
